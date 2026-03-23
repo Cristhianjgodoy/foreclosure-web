@@ -723,8 +723,7 @@ const contents=api.map(m=>({role:m.role==='assistant'?'model':'user',parts:toP(m
 const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?key='+GEMINI_KEY+'&alt=sse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents,systemInstruction:{parts:[{text:sp}]},generationConfig:{maxOutputTokens:4000}})});
 if(!res.ok){const err=await res.json();throw new Error(err.error?.message||'HTTP '+res.status);}
 const reader=res.body.getReader();const decoder=new TextDecoder();let buffer='';let streamText='';
-while(true){const{done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split('
-');buffer=lines.pop()||'';for(const line of lines){if(!line.startsWith('data: '))continue;const data=line.slice(6).trim();if(data==='[DONE]')continue;try{const evt=JSON.parse(data);const chunk=evt.candidates?.[0]?.content?.parts?.[0]?.text||'';if(chunk){streamText+=chunk;setMsgs(prev=>{const copy=[...prev];for(let i=copy.length-1;i>=0;i--){if(copy[i]._streaming){copy[i]={...copy[i],content:streamText};break;}}return copy;});}}catch(e){if(e.message!=='Unexpected end of JSON input')throw e;}}}
+while(true){const{done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});const lines=buffer.split('\n');buffer=lines.pop()||'';for(const line of lines){if(!line.startsWith('data: '))continue;const data=line.slice(6).trim();if(data==='[DONE]')continue;try{const evt=JSON.parse(data);const chunk=evt.candidates?.[0]?.content?.parts?.[0]?.text||'';if(chunk){streamText+=chunk;setMsgs(prev=>{const copy=[...prev];for(let i=copy.length-1;i>=0;i--){if(copy[i]._streaming){copy[i]={...copy[i],content:streamText};break;}}return copy;});}}catch(e){if(e.message!=='Unexpected end of JSON input')throw e;}}}
 const reply=streamText||"Erro: resposta vazia.";
       const fm=[...nm,{role:"assistant",content:reply}];
       setMsgs(fm);
@@ -947,12 +946,11 @@ function App() {
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 document.getElementById('loading').style.display='none';
 </script>
-
 <div id="gemini-settings" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:32px;max-width:460px;width:90%;color:white;font-family:system-ui,sans-serif;">
     <h2 style="margin:0 0 8px;font-size:20px;font-weight:700;">&#9881; Configurar Gemini API</h2>
     <p style="margin:0 0 6px;color:#94a3b8;font-size:14px;">Insira sua chave gratuita do Google AI Studio para usar a analise de IA.</p>
-    <p style="margin:0 0 16px;font-size:13px;"><a href="https://aistudio.google.com/apikey" target="_blank" style="color:#60a5fa;">Obter chave gratuita em aistudio.google.com</a></p>
+    <p style="margin:0 0 16px;font-size:13px;"><a href="https://aistudio.google.com/apikey" target="_blank" style="color:#60a5fa;">Obter chave gratuita</a></p>
     <input id="gemini-key-input" type="password" placeholder="Cole sua chave aqui (AIza...)" style="width:100%;padding:10px 14px;background:#0f172a;border:1px solid #475569;border-radius:8px;color:white;font-size:14px;box-sizing:border-box;margin-bottom:12px;outline:none;"/>
     <div style="display:flex;gap:8px;">
       <button onclick="var k=document.getElementById('gemini-key-input').value.trim();if(k){localStorage.setItem('foreclosure_gemini_key',k);document.getElementById('gemini-settings').style.display='none';alert('Chave salva! Envie sua mensagem novamente.');}else{alert('Insira uma chave valida.');}" style="flex:1;padding:10px;background:#2563eb;border:none;border-radius:8px;color:white;font-weight:600;cursor:pointer;font-size:14px;">Salvar Chave</button>
